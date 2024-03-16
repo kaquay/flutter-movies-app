@@ -69,4 +69,9 @@ class Movie {
     data['posterurl'] = posterurl;
     return data;
   }
+  
+  @override
+  String toString(){
+    return "Movie{id=$id}";
+  }
 }

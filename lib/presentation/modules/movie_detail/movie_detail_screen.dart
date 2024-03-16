@@ -1,11 +1,12 @@
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:movies_app/data/models/movie.dart';
+import 'package:movies_app/presentation/modules/global/movie_manager.dart';
 import 'package:movies_app/presentation/modules/global/widgets/movie_rating_bar.dart';
+import 'package:movies_app/presentation/modules/movie_detail/movie_detail_bloc.dart';
+import 'package:provider/provider.dart';
 
 class MovieDetailScreen extends StatelessWidget {
   final Movie movie;
@@ -13,6 +14,8 @@ class MovieDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    MovieDetailBloC bloC = context.read();
+    bloC.setMovie(movie);
     return Scaffold(
       body: Stack(
         children: [
@@ -39,7 +42,41 @@ class MovieDetailScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildAddToWatchListButton(BuildContext context) {
+    // should check user logged or not, but just ignore that case
+    MovieManager movieManager = context.read();
+    MovieDetailBloC bloC = context.read();
+    bool isAdded = movieManager.isAddedToWatchList(movie);
+    String actionAdd = "Add to the watch lis";
+    String actionRemove = "Remove to the watch list";
+    
+    return StreamBuilder<Movie>(
+        stream: movieManager.movieEventStream(),
+        initialData: null,
+        builder: (_, snapshot) {
+          if (snapshot.hasData) {
+            Movie eventMovie = snapshot.requireData;
+            if (eventMovie.id == movie.id) {
+              // update isAdded
+              isAdded = movieManager.isAddedToWatchList(movie);
+            }
+          }
+          String content = isAdded ? actionRemove : actionAdd;
+          return TextButton(
+              onPressed: () {
+                isAdded
+                    ? bloC.removeMovieToWatchList()
+                    : bloC.addMovieToWatchList();
+              },
+              child: Text(content));
+        });
+  }
+
   Widget _buildContent(BuildContext context) {
+    String introduce = "Introduce";
+    String introduceValue = movie.storyline ?? '';
+    String actors = "Actors";
+    String actorsValue = movie.actors?.join("\n") ?? '';
     return Stack(
       children: [
         Positioned(
@@ -57,7 +94,7 @@ class MovieDetailScreen extends StatelessWidget {
               Row(
                 children: [
                   Hero(
-                    tag: "poster",
+                    tag: "poster${movie.id}",
                     child: CachedNetworkImage(
                       imageUrl: movie.posterurl ?? '',
                       placeholder: (context, url) =>
@@ -83,25 +120,26 @@ class MovieDetailScreen extends StatelessWidget {
                 height: 400.0,
                 child: ListView(
                   children: [
-                    const Text(
-                      'Introduce',
-                      style: TextStyle(
+                    _buildAddToWatchListButton(context),
+                    Text(
+                      introduce,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16.0,
                       ),
                     ),
-                    Text(movie.storyline ?? ''),
+                    Text(introduceValue),
                     const SizedBox(
                       height: 16.0,
                     ),
-                    const Text(
-                      'Actors',
-                      style: TextStyle(
+                    Text(
+                      actors,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16.0,
                       ),
                     ),
-                    Text(movie.actors?.join("\n") ?? ''),
+                    Text(actorsValue),
                   ],
                 ),
               ),
@@ -125,10 +163,14 @@ class MovieDetailScreen extends StatelessWidget {
             0, (previousValue, element) => (previousValue ?? 0) + element) ??
         0;
     double averageRating = totalPoint.toDouble() / ratings.length / 2;
+    String averageRatingValue = averageRating.toStringAsFixed(2);
     return Column(
       mainAxisSize: MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(
+          height: 16.0,
+        ),
         Text(
           title,
           style: const TextStyle(
@@ -168,7 +210,7 @@ class MovieDetailScreen extends StatelessWidget {
           children: [
             MovieRatingBar(rating: averageRating),
             Text(
-              averageRating.toStringAsFixed(2),
+              averageRatingValue,
               style: const TextStyle(
                 color: Colors.yellow,
               ),
@@ -181,25 +223,29 @@ class MovieDetailScreen extends StatelessWidget {
 
   Widget _buildContentBackgroundCard(BuildContext context) {
     Color contentBgColor = Colors.grey;
-    return Container(
-      margin: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(3.0),
-        color: contentBgColor,
+    return Hero(
+      tag: "background${movie.id}",
+      child: Container(
+        margin: const EdgeInsets.all(8.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(3.0),
+          color: contentBgColor,
+        ),
       ),
     );
   }
 
   Widget _buildBar(BuildContext context) {
-    return const Row(
+    String title = "Detail";
+    return Row(
       children: [
-        BackButton(
+        const BackButton(
           color: Colors.white,
         ),
         Expanded(
           child: Text(
-            'Detail',
-            style: TextStyle(
+            title,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 18.0,
               fontWeight: FontWeight.bold,
@@ -207,7 +253,7 @@ class MovieDetailScreen extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ),
-        SizedBox(
+        const SizedBox(
           width: 50.0,
         ),
       ],
@@ -216,12 +262,13 @@ class MovieDetailScreen extends StatelessWidget {
 
   Widget _buildBackgroundImage(BuildContext context) {
     double blur = 3.0;
+    String imageUrl = movie.posterurl ?? '';
     return Container(
       height: 350.0,
       decoration: BoxDecoration(
         image: DecorationImage(
           image: CachedNetworkImageProvider(
-            movie.posterurl ?? '',
+            imageUrl,
           ),
           fit: BoxFit.cover,
         ),

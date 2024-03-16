@@ -1,9 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:movies_app/data/models/movie.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:movies_app/presentation/modules/global/widgets/movie_rating_bar.dart';
 
 class MovieItem extends StatelessWidget {
@@ -37,11 +34,14 @@ class MovieItem extends StatelessWidget {
               bottom: 0.0,
               right: 10.0,
               left: 10.0,
-              child: Container(
-                margin: const EdgeInsets.all(8.0),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(3.0),
-                  color: contentBgColor,
+              child: Hero(
+                tag: "background${movie.id}",
+                child: Container(
+                  margin: const EdgeInsets.all(8.0),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(3.0),
+                    color: contentBgColor,
+                  ),
                 ),
               ),
             ),
@@ -50,7 +50,7 @@ class MovieItem extends StatelessWidget {
               bottom: 20.0,
               left: 40.0,
               child: Hero(
-                tag: "poster",
+                tag: "poster${movie.id}",
                 child: CachedNetworkImage(
                   imageUrl: movie.posterurl ?? '',
                   placeholder: (context, url) => Container(color: Colors.grey),
