@@ -36,8 +36,8 @@ class Movie {
     id = json['id'];
     title = json['title'];
     year = json['year'];
-    genres = json['genres'].cast<String>();
-    ratings = json['ratings'].cast<int>();
+    genres = (json['genres'] ?? []).cast<String>();
+    ratings = (json['ratings'] ?? []).cast<int>();
     poster = json['poster'];
     contentRating = json['contentRating'];
     duration = json['duration'];
@@ -45,7 +45,7 @@ class Movie {
     averageRating = json['averageRating'];
     originalTitle = json['originalTitle'];
     storyline = json['storyline'];
-    actors = json['actors'].cast<String>();
+    actors = (json['actors'] ?? []).cast<String>();
     imdbRating = double.tryParse(json["imdbRating"].toString());
     posterurl = json['posterurl'];
   }
